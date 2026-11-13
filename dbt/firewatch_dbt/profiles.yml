@@ -1,0 +1,13 @@
+firewatch_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: "{{ env_var('FIREWATCH_PROJECT') }}"
+      dataset: firewatch_staging
+      location: US
+      keyfile: "{{ env_var('DBT_KEYFILE') }}"
+      threads: 4
+      job_execution_timeout_seconds: 600
+      maximum_bytes_billed: 5000000000      # 5 GB safety cap per query

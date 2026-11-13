@@ -1,0 +1,12 @@
+priority,region_name,min_lat,max_lat,min_lon,max_lon
+1,Central America & Caribbean,7,23.5,-92.5,-60
+2,South America,-56,13,-82,-34
+3,North America,14,84,-170,-50
+4,Europe,35,72,-25,40
+5,Middle East,12,42,35,63
+6,Africa,-35,38,-26,52
+7,Indian Subcontinent,5,37,60,92.5
+8,Southeast Asia,-11,23.5,92.5,141
+9,East Asia,23.5,54,92.5,146
+10,Northern Eurasia,36,82,26,180
+11,Oceania,-50,0,110,180

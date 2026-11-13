@@ -1,0 +1,27 @@
+# secrets
+.env
+*.env
+!.env.example
+keys/
+secrets.toml
+!secrets.toml.example
+# dbt
+target/
+dbt_packages/
+logs/
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+# airflow
+airflow/logs/
+airflow/plugins/
+airflow/config/
+# data
+*.csv
+!dbt/firewatch_dbt/seeds/region_bounds.csv
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

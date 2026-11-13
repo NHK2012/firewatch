@@ -1,0 +1,26 @@
+name: firewatch_dbt
+version: "1.0.0"
+config-version: 2
+profile: firewatch_dbt
+
+vars:
+  raw_dataset: firewatch_raw      # use firewatch_raw_sample while developing
+  frp_moderate_min: 10            # MW - project-defined bins,
+  frp_high_min: 50                # MW   NOT official NASA classes
+  anomaly_percentile: 99
+
+models:
+  firewatch_dbt:
+    staging:
+      +schema: firewatch_staging
+      +materialized: view
+    intermediate:
+      +schema: firewatch_staging
+      +materialized: table
+    marts:
+      +schema: firewatch_marts
+      +materialized: table
+
+seeds:
+  firewatch_dbt:
+    +schema: firewatch_staging
