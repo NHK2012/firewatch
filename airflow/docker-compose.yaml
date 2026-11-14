@@ -1,0 +1,128 @@
+# FireWatch Airflow (local, single machine). Based on the structure of the official Airflow 3.0.x
+# docker-compose, trimmed to LocalExecutor (no Redis/Celery) so it fits next to Airbyte in 8 GB.
+# Keep the image tag in Dockerfile and AIRFLOW_VERSION in sync.
+#
+#   cd airflow
+#   mkdir -p dags logs plugins config keys
+#   cp .env.example .env        # then fill in values (never commit .env)
+#   docker compose up airflow-init
+#   docker compose up -d --build
+#   UI: http://localhost:8080  (local demo: no login, see AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS)
+
+x-airflow-common: &airflow-common
+  build: .
+  image: firewatch-airflow:local
+  env_file: .env
+  environment: &airflow-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-apiserver:8080/execution/
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
+    AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"   # local demo only; UI is bound to 127.0.0.1
+    # All components must share the same JWT secret, or task runs fail with "Signature verification failed".
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET:-firewatch-local-only-jwt-secret-0123456789}
+    # Project settings (names only here; values come from .env)
+    FIREWATCH_PROJECT: ${FIREWATCH_PROJECT}
+    DBT_KEYFILE: /opt/airflow/keys/sa-dbt.json
+    GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/keys/sa-dbt.json   # sa-dbt also runs the validation task
+    AIRBYTE_API_URL: http://host.docker.internal:8000/api/public/v1
+    FIREWATCH_RETRY_DELAY_MIN: ${FIREWATCH_RETRY_DELAY_MIN:-5}
+    FIRMS_PRODUCT: ${FIRMS_PRODUCT:-VIIRS_NOAA20_NRT}   # same product as the Airbyte source
+    # Airflow Variables (read in the DAG with Variable.get). Masked in logs because of their names.
+    AIRFLOW_VAR_FIRMS_API_KEY: ${AIRFLOW_VAR_FIRMS_API_KEY}
+    AIRFLOW_VAR_AIRBYTE_CONNECTION_ID: ${AIRFLOW_VAR_AIRBYTE_CONNECTION_ID}
+    AIRFLOW_VAR_AIRBYTE_CLIENT_ID: ${AIRFLOW_VAR_AIRBYTE_CLIENT_ID}
+    AIRFLOW_VAR_AIRBYTE_CLIENT_SECRET: ${AIRFLOW_VAR_AIRBYTE_CLIENT_SECRET}
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./config:/opt/airflow/config
+    - ./plugins:/opt/airflow/plugins
+    - ../dbt:/opt/airflow/dbt          # Neha's dbt project
+    - ./keys:/opt/airflow/keys:ro      # service-account JSON (git-ignored)
+  user: "${AIRFLOW_UID:-50000}:0"
+  extra_hosts:
+    - "host.docker.internal:host-gateway"   # needed on Linux so the DAG can reach Airbyte on the host
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
+  airflow-apiserver:
+    <<: *airflow-common
+    command: api-server
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-triggerer:
+    <<: *airflow-common
+    command: triggerer
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        mkdir -p /opt/airflow/{logs,dags,plugins,config}
+        chown -R "${AIRFLOW_UID:-50000}:0" /opt/airflow/{logs,dags,plugins,config} || true
+        exec /entrypoint airflow db migrate
+    user: "0:0"
+
+volumes:
+  postgres-db-volume:
