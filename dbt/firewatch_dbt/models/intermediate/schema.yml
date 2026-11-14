@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: int_fire_observations
+    description: >
+      Exact-deduplicated fire observations with a deterministic key derived
+      from observation attributes (including product) and a reliability flag.
+    columns:
+      - name: observation_key
+        description: SHA-256 key for the observation attributes, including product.
+        data_tests:
+          - unique
+          - not_null
+      - name: acq_date
+        description: Acquisition date used to partition this table.
+        data_tests:
+          - not_null
+      - name: grid_lat
+        description: Integer latitude coordinate of the one-degree grid cell containing the observation.
+        data_tests:
+          - not_null
+      - name: grid_lon
+        description: Integer longitude coordinate of the one-degree grid cell containing the observation.
+        data_tests:
+          - not_null
+      - name: grid_cell_id
+        description: Stable identifier formed from the integer grid latitude and longitude coordinates.
+        data_tests:
+          - not_null
+      - name: is_reliable
+        description: True for nominal or high confidence; false for low confidence.
+
+  - name: dim_grid_cell
+    description: >
+      One row per observed one-degree grid cell, assigned to the highest-priority
+      matching region by the cell centre.
+    columns:
+      - name: grid_cell_id
+        description: Stable identifier formed from the integer grid coordinates.
+        data_tests:
+          - unique
+          - not_null
+      - name: grid_lat
+        description: Integer latitude coordinate of the one-degree grid cell.
+        data_tests:
+          - not_null
+      - name: grid_lon
+        description: Integer longitude coordinate of the one-degree grid cell.
+        data_tests:
+          - not_null
+      - name: region_name
+        description: Region assigned from the cell centre, or Unclassified.
+        data_tests:
+          - not_null
