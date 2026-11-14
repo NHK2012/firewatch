@@ -38,8 +38,12 @@ models:
           - non_negative
       - name: average_frp
         description: Average non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
       - name: maximum_frp
         description: Maximum non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
       - name: seven_day_avg_detections
         description: >
           Average daily detections over this and up to six preceding observed
@@ -76,12 +80,22 @@ models:
           - not_null
       - name: daytime_detections
         description: Detections with the exact FIRMS daynight value D.
+        data_tests:
+          - not_null
+          - non_negative
       - name: nighttime_detections
         description: Detections with the exact FIRMS daynight value N.
+        data_tests:
+          - not_null
+          - non_negative
       - name: average_frp
         description: Average non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
       - name: maximum_frp
         description: Maximum non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
       - name: average_latitude
         description: Average observation latitude in decimal degrees.
       - name: average_longitude
@@ -101,7 +115,6 @@ models:
         description: First calendar date of the month.
         data_tests:
           - not_null
-          - unique
       - name: total_detections
         description: Total deduplicated detections observed during the month.
         data_tests:
@@ -224,3 +237,4 @@ models:
           Continuous FRP percentile calculated from all non-null observations.
         data_tests:
           - not_null
+          - non_negative

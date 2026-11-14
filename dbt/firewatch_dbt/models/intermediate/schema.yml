@@ -15,6 +15,40 @@ models:
         description: Acquisition date used to partition this table.
         data_tests:
           - not_null
+      - name: acq_time
+        description: Acquisition time as a BigQuery TIME value.
+      - name: latitude
+        description: Observation latitude in decimal degrees.
+      - name: longitude
+        description: Observation longitude in decimal degrees.
+      - name: bright_ti4
+        description: VIIRS I-4 brightness temperature.
+      - name: bright_ti5
+        description: VIIRS I-5 brightness temperature.
+      - name: scan
+        description: Pixel scan dimension in kilometers, when supplied.
+      - name: track
+        description: Pixel track dimension in kilometers, when supplied.
+      - name: satellite
+        description: Satellite identifier.
+      - name: instrument
+        description: Instrument identifier.
+      - name: confidence
+        description: Normalized source confidence category.
+      - name: confidence_raw
+        description: Original source confidence value before normalization.
+      - name: version
+        description: FIRMS product version.
+      - name: frp
+        description: Fire Radiative Power in megawatts, when supplied.
+        data_tests:
+          - non_negative
+      - name: daynight
+        description: Day/night indicator.
+      - name: product
+        description: FIRMS product identifier included in the observation key.
+      - name: _airbyte_extracted_at
+        description: Timestamp used to select the latest copy of a duplicate observation.
       - name: grid_lat
         description: Integer latitude coordinate of the one-degree grid cell containing the observation.
         data_tests:
@@ -52,3 +86,23 @@ models:
         description: Region assigned from the cell centre, or Unclassified.
         data_tests:
           - not_null
+
+seeds:
+  - name: region_bounds
+    description: >
+      Approximate rectangular geographic bounds used to assign a region label
+      to each one-degree grid cell.
+    columns:
+      - name: priority
+        description: >
+          Ordering used to resolve overlapping region bounds; lower values win.
+      - name: region_name
+        description: Human-readable region label.
+      - name: min_lat
+        description: Inclusive minimum latitude boundary in decimal degrees.
+      - name: max_lat
+        description: Inclusive maximum latitude boundary in decimal degrees.
+      - name: min_lon
+        description: Inclusive minimum longitude boundary in decimal degrees.
+      - name: max_lon
+        description: Inclusive maximum longitude boundary in decimal degrees.
