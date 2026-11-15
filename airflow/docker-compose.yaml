@@ -27,7 +27,7 @@ x-airflow-common: &airflow-common
     FIREWATCH_PROJECT: ${FIREWATCH_PROJECT}
     DBT_KEYFILE: /opt/airflow/keys/sa-dbt.json
     GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/keys/sa-dbt.json   # sa-dbt also runs the validation task
-    AIRBYTE_API_URL: http://host.docker.internal:8000/api/public/v1
+    AIRBYTE_API_URL: https://api.airbyte.com/v1
     FIREWATCH_RETRY_DELAY_MIN: ${FIREWATCH_RETRY_DELAY_MIN:-5}
     FIRMS_PRODUCT: ${FIRMS_PRODUCT:-VIIRS_NOAA20_NRT}   # same product as the Airbyte source
     # Airflow Variables (read in the DAG with Variable.get). Masked in logs because of their names.
@@ -69,7 +69,7 @@ services:
     <<: *airflow-common
     command: api-server
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8081:8080"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
       interval: 30s

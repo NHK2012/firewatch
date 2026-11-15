@@ -11,7 +11,7 @@ cp .env.example .env                              # fill in values; never commit
 cp ../keys/sa-dbt.json keys/sa-dbt.json           # or put the key straight into airflow/keys/
 docker compose up airflow-init
 docker compose up -d --build
-# UI: http://localhost:8080  (local demo, no login)
+# UI: http://localhost:8081  (local demo, no login)
 ```
 Docker Desktop needs **>= 8 GB RAM**. Airbyte must already be running on the same machine (http://localhost:8000);
 the DAG reaches it as `host.docker.internal:8000` (`extra_hosts` makes that work on Linux).
