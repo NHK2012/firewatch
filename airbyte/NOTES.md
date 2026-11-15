@@ -6,7 +6,7 @@ client secrets or the MAP_KEY into this file.**
 ## Status board (tick as you go)
 - [x] B1 NASA key + one-day test (`bash airbyte/tools/firms_check.sh`): **12,795 rows/day** (VIIRS_NOAA20_NRT, ~1.07 MB)
 - [x] B2 GCP project, 3 datasets (location US), 3 service accounts, teammate added, keys shared privately (reported done; `--check-roles` result: ____)
-- [ ] B3 Sandbox check: Sandbox works / switched to billing-enabled free trial / Snowflake (circle one)
+- [x] B3 Sandbox check: Sandbox works / switched to billing-enabled free trial / Snowflake (circle one)
 - [ ] B4 Airbyte installed (`abctl local install`), UI at http://localhost:8000
 - [ ] B5 Source connector built and tested (Builder, time spent: ____ h) or File-source fallback
 - [ ] B6 Destination + connection + first sync verified. Connection ID: (kept in `airflow/.env`, not here)
@@ -61,6 +61,15 @@ Airbyte also creates `airbyte_internal` (untyped copy) - that is normal.
 ## Updates due to unavailability of airbyte locally:
 Airbyte Cloud is used, destination firewatch-bigquery, location US, the sandbox blocked sync (billingNotEnabled), and free-trial billing was enabled with a budget alert. No keys.
 
+## Updates for B6:
+connection name: firms-nasa
+sync mode Incremental | Append
+manual schedule
+first sync 143,050 rows
+first day: 2026-11-12
+last day:2026-11-15
+days_loaded: 4
+raw rows: 143050
 
 ## Window decision (B9)
 Run a 5-day test sync, time it (`python airbyte/tools/airbyte_api.py sync` prints elapsed minutes).
