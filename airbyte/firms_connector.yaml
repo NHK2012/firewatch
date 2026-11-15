@@ -1,11 +1,4 @@
-# FireWatch NASA FIRMS - Airbyte low-code (declarative) source manifest.
-#
-# HOW TO USE: Airbyte UI > Builder > "Import a YAML manifest" > pick this file. Fill the test inputs
-# (map_key = your NASA key, start_date = e.g. 5 days ago) and press Test. If the import is rejected
-# or a field is unknown in your Airbyte version, fix it in the Builder UI - the settings are the ones
-# in guide section 3.2. Then Publish, and Export the corrected YAML back over this file.
-# The MAP_KEY is a user input marked secret; it is never written in this file.
-version: 6.36.0
+version: 7.28.2
 
 type: DeclarativeSource
 
@@ -17,111 +10,173 @@ check:
 streams:
   - type: DeclarativeStream
     name: active_fire_observations
-    primary_key: []
     retriever:
       type: SimpleRetriever
+      decoder:
+        type: CsvDecoder
+        encoding: utf-8
+        delimiter: ","
       requester:
         type: HttpRequester
-        url_base: https://firms.modaps.eosdis.nasa.gov
-        # Key + product + area are part of the URL path; 5 = days per request (API maximum);
-        # last segment = first day of the window.
-        path: >-
-          /api/area/csv/{{ config['map_key'] }}/{{ config['source'] }}/{{ config['area'] }}/5/{{ stream_interval.start_time }}
+        url: >-
+          https://firms.modaps.eosdis.nasa.gov/api/area/csv/{{ config['map_key']
+          }}/{{ config['source'] }}/{{ config['area'] }}/5/{{
+          stream_interval.start_time }}
         http_method: GET
         error_handler:
           type: DefaultErrorHandler
           response_filters:
             - type: HttpResponseFilter
               action: FAIL
-              http_codes: [400, 401, 403]
-              error_message: >-
-                FIRMS rejected the request (check map_key, source and area).
+              http_codes:
+                - 400
+                - 401
+                - 403
+              error_message: FIRMS rejected the request (check map_key, source and area).
       record_selector:
         type: RecordSelector
         extractor:
           type: DpathExtractor
           field_path: []
-      decoder:
-        type: CsvDecoder      # first CSV row supplies the field names
-        encoding: utf-8
-        delimiter: ","
-    incremental_sync:
-      type: DatetimeBasedCursor
-      cursor_field: acq_date
-      datetime_format: "%Y-%m-%d"
-      cursor_datetime_formats:
-        - "%Y-%m-%d"
-      start_datetime:
-        type: MinMaxDatetime
-        datetime: "{{ config['start_date'] }}"
-        datetime_format: "%Y-%m-%d"
-      end_datetime:
-        type: MinMaxDatetime
-        datetime: "{{ now_utc().strftime('%Y-%m-%d') }}"
-        datetime_format: "%Y-%m-%d"
-      step: P5D                 # matches the API's 5-day maximum
-      cursor_granularity: P1D
+    primary_key: []
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        properties:
+          version:
+            type:
+              - string
+              - "null"
+          latitude:
+            type:
+              - string
+              - "null"
+          longitude:
+            type:
+              - string
+              - "null"
+          bright_ti4:
+            type:
+              - string
+              - "null"
+          scan:
+            type:
+              - string
+              - "null"
+          track:
+            type:
+              - string
+              - "null"
+          acq_date:
+            type: string
+          acq_time:
+            type:
+              - string
+              - "null"
+          satellite:
+            type:
+              - string
+              - "null"
+          instrument:
+            type:
+              - string
+              - "null"
+          confidence:
+            type:
+              - string
+              - "null"
+          bright_ti5:
+            type:
+              - string
+              - "null"
+          frp:
+            type:
+              - string
+              - "null"
+          daynight:
+            type:
+              - string
+              - "null"
+          product:
+            type:
+              - string
+              - "null"
+        required:
+          - acq_date
+        additionalProperties: true
     transformations:
       - type: AddFields
         fields:
           - type: AddedFieldDefinition
-            path: [product]
+            path:
+              - product
             value: "{{ config['source'] }}"
-    schema_loader:
-      type: InlineSchemaLoader
-      schema:
-        $schema: http://json-schema.org/draft-07/schema#
-        type: object
-        properties:
-          latitude: {type: [number, "null"]}
-          longitude: {type: [number, "null"]}
-          bright_ti4: {type: [number, "null"]}
-          bright_ti5: {type: [number, "null"]}
-          scan: {type: [number, "null"]}
-          track: {type: [number, "null"]}
-          frp: {type: [number, "null"]}
-          acq_date: {type: [string, "null"]}
-          acq_time: {type: [string, "null"]}      # HHMM - keep as string to preserve leading zeros
-          satellite: {type: [string, "null"]}
-          instrument: {type: [string, "null"]}
-          confidence: {type: [string, "null"]}     # l / n / h
-          version: {type: [string, "null"]}
-          daynight: {type: [string, "null"]}
-          product: {type: [string, "null"]}
+    incremental_sync:
+      type: DatetimeBasedCursor
+      step: P5D
+      cursor_field: acq_date
+      end_datetime:
+        type: MinMaxDatetime
+        datetime: "{{ now_utc().strftime('%Y-%m-%d') }}"
+        datetime_format: "%Y-%m-%d"
+      start_datetime:
+        type: MinMaxDatetime
+        datetime: "{{ config['start_date'] }}"
+        datetime_format: "%Y-%m-%d"
+      datetime_format: "%Y-%m-%d"
+      cursor_granularity: P1D
+      cursor_datetime_formats:
+        - "%Y-%m-%d"
 
 spec:
   type: Spec
   connection_specification:
-    $schema: http://json-schema.org/draft-07/schema#
     type: object
+    $schema: http://json-schema.org/draft-07/schema#
     required:
       - map_key
       - source
       - area
       - start_date
-    additionalProperties: true
     properties:
-      map_key:
-        type: string
-        title: NASA FIRMS MAP_KEY
-        airbyte_secret: true
-        order: 0
-      source:
-        type: string
-        title: FIRMS product
-        description: FIRMS product. Use VIIRS_NOAA20_NRT (VIIRS_SNPP_NRT returned no data in our test; see NOTES).
-        default: VIIRS_NOAA20_NRT
-        order: 1
       area:
         type: string
-        title: Area
         description: "'world' or a bounding box west,south,east,north."
-        default: world
         order: 2
+        title: Area
+        default: world
+      source:
+        type: string
+        description: >-
+          FIRMS product. Use VIIRS_NOAA20_NRT (VIIRS_SNPP_NRT returned no data
+          in our test; see NOTES).
+        order: 1
+        title: FIRMS product
+        default: VIIRS_NOAA20_NRT
+      map_key:
+        type: string
+        order: 0
+        title: NASA FIRMS MAP_KEY
+        airbyte_secret: true
       start_date:
         type: string
-        title: Start date
         description: First day to load, YYYY-MM-DD (30 or 90 days back, see guide 2.4).
-        pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
-        format: date
         order: 3
+        title: Start date
+        format: date
+        pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+    additionalProperties: true
+
+metadata:
+  testedStreams:
+    active_fire_observations:
+      isStale: false
+      hasRecords: true
+      streamHash: a7fea801ebbd83d7504abe7318d9bf14a74341ae
+      hasResponse: true
+      primaryKeysAreUnique: false
+      primaryKeysArePresent: false
+      responsesAreSuccessful: true
+  autoImportSchema: {}
