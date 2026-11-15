@@ -92,6 +92,41 @@ Row	month	n	days
 3	2026-10	1746913	31
 4	2026-11	765781	14	
 
+## B9: window, backfill and idempotency check (16 Nov 2026)
+
+### Window decision
+- Timed 5-day test sync (2026-11-10 to 2026-11-14): 249,771 records, 69.66 MB, 1 min 53 s.
+- Under the 10-minute rule, so the 90-day window was chosen.
+- NASA availability for VIIRS_NOAA20_NRT on 15 Nov: 2026-08-01 to 2026-11-15.
+
+### Backfill
+- Source start date 2026-08-17; stream cleared first so the saved cursor was reset.
+- Sync time: 22 min 50 s.
+- Raw rows: 6,162,207. First day 2026-08-17, last day 2026-11-14, 90 days, no gaps.
+- Monthly rows: Aug 1,631,834 (15 days), Sep 2,017,679 (30), Oct 1,746,913 (31), Nov 765,781 (14).
+- Distinct detections by (latitude, longitude, acq_date, acq_time, satellite, product): 6,162,205, so 2 repeated rows right after a clean load.
+
+### Run-the-DAG-twice check
+| Layer | After 1st run | After 2nd run |
+|---|---|---|
+| raw | 6,245,635 | 6,245,635 |
+| staging (stg_active_fires) | 6,245,631 | 6,245,631 |
+| intermediate (int_fire_observations) | 6,204,267 | 6,204,267 |
+| dim_grid_cell | 10,671 | 10,671 |
+| mart_daily_fire_activity | 91 | 91 |
+| mart_monthly_fire_activity | 4 | 4 |
+| mart_regional_fire_activity | 12 | 12 |
+| mart_fire_intensity | 3 | 3 |
+| mart_fire_anomalies | 62,048 | 62,048 |
+
+- All six DAG tasks succeeded on both runs and dbt tests passed (including the unique test on the observation key).
+- Raw grew by 83,428 rows after the backfill: 42,064 new detections (15 Nov) and 41,364 repeats from re-reading the last loaded day (Incremental | Append).
+- Raw has 41,366 rows beyond the distinct detection count (6,245,635 vs 6,204,269 distinct).
+- Staging removed 4 invalid rows; the intermediate model removed 41,364 repeats (6,245,631 to 6,204,267).
+- Intermediate rows up to 2026-11-14: 6,162,203, so old dates were not inflated by the re-read.
+- mart_daily has 91 rows (90 backfill days plus 15 Nov); mart_anomalies is about 1% of intermediate rows.
+- Note: the second run loaded no new raw rows, so it shows dbt reruns are idempotent; the dedup under incoming repeats was shown by the first run.
+
 ## Useful tools (`airbyte/tools/`)
 | Tool | For |
 | --- | --- |
