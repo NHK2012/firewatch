@@ -77,6 +77,21 @@ Under ~10 min -> `start_date` = 90 days back; otherwise 30. To change the window
 `start_date` on the source, then **Clear data** on the connection (UI, or `airbyte_api.py reset`) so the
 cursor restarts, then sync again.
 
+the 5-day test (1 min 53 s, 249,771 rows, 69.66 MB, about 50,000 rows per day), the decision (90 days from 2026-08-17), and later the final first day, last day and total rows.
+
+the 90 day test:
+days_loaded = 90
+22mins50sec
+raw rows = 6162207
+first day = 2026-08-17
+last day = 2026-11-14
+
+Row	month	n	days
+1	2026-08	1631834	15
+2	2026-09	2017679	30
+3	2026-10	1746913	31
+4	2026-11	765781	14	
+
 ## Useful tools (`airbyte/tools/`)
 | Tool | For |
 | --- | --- |
