@@ -58,6 +58,10 @@ Project ID = yours, location **US**, default dataset `firewatch_raw`, credential
 `keys/sa-airbyte.json`, standard loading (no GCS staging). Connection: Incremental | Append, Manual.
 Airbyte also creates `airbyte_internal` (untyped copy) - that is normal.
 
+## Updates due to unavailability of airbyte locally:
+Airbyte Cloud is used, destination firewatch-bigquery, location US, the sandbox blocked sync (billingNotEnabled), and free-trial billing was enabled with a budget alert. No keys.
+
+
 ## Window decision (B9)
 Run a 5-day test sync, time it (`python airbyte/tools/airbyte_api.py sync` prints elapsed minutes).
 Under ~10 min -> `start_date` = 90 days back; otherwise 30. To change the window after a test: set the new
