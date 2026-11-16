@@ -28,6 +28,7 @@ from firewatch_bi.visuals import (
 
 REGION_PARAMETERS = (("row_limit", "INT64", 12),)
 EXPLORER_ANOMALY_PARAMETERS = (("row_limit", "INT64", 100),)
+PLOTLY_CONFIG = {"responsive": True}
 
 EXAMPLE_QUESTIONS = (
     "How many fire detections are recorded?",
@@ -49,7 +50,7 @@ def apply_visual_identity() -> None:
             --fw-bg: #0b1520;
             --fw-panel: #111f2b;
             --fw-ivory: #f4f0e7;
-            --fw-muted: #93a5b2;
+            --fw-muted: #f4f0e7;
             --fw-orange: #f07a3f;
             --fw-teal: #65c2b5;
             --fw-rule: rgba(147, 165, 178, 0.20);
@@ -69,9 +70,15 @@ def apply_visual_identity() -> None:
             padding-top: 2rem;
             padding-bottom: 3rem;
         }
-        h1, h2, h3 { color: var(--fw-ivory); letter-spacing: -0.035em; }
+        h1, h2, h3 {
+            color: var(--fw-ivory) !important;
+            letter-spacing: -0.035em;
+        }
         h1 { font-size: clamp(2.4rem, 5vw, 4.1rem) !important; }
         h2 { font-size: 1.55rem !important; }
+        [data-testid="stCaptionContainer"] p {
+            color: var(--fw-ivory) !important;
+        }
         p, label, [data-testid="stMarkdownContainer"] {
             color: var(--fw-ivory);
         }
@@ -240,45 +247,53 @@ def render_overview() -> None:
 
     st.markdown('<hr class="fw-rule">', unsafe_allow_html=True)
     st.markdown('<div class="fw-kicker">02 / Activity and geography</div>', unsafe_allow_html=True)
-    left, right = st.columns([1.7, 1])
-    with left:
-        st.subheader("Daily detection activity")
-        if daily is None:
-            st.caption("Daily activity is unavailable.")
-        elif daily.empty:
-            render_empty("daily activity")
-        else:
-            st.plotly_chart(daily_figure(daily), width="stretch", key="overview-daily")
-    with right:
-        st.subheader("Regional distribution")
-        if regional is None:
-            st.caption("Regional activity is unavailable.")
-        elif regional.empty:
-            render_empty("regional activity")
-        else:
-            st.plotly_chart(
-                regional_figure(regional),
-                width="stretch",
-                key="overview-regions",
-            )
+    st.subheader("Daily detection activity")
+    if daily is None:
+        st.caption("Daily activity is unavailable.")
+    elif daily.empty:
+        render_empty("daily activity")
+    else:
+        st.plotly_chart(
+            daily_figure(daily),
+            width="stretch",
+            key="overview-daily",
+            theme=None,
+            config=PLOTLY_CONFIG,
+        )
+
+    st.subheader("Regional distribution")
+    if regional is None:
+        st.caption("Regional activity is unavailable.")
+    elif regional.empty:
+        render_empty("regional activity")
+    else:
+        st.plotly_chart(
+            regional_figure(regional),
+            width="stretch",
+            key="overview-regions",
+            theme=None,
+            config=PLOTLY_CONFIG,
+        )
 
     st.markdown('<hr class="fw-rule">', unsafe_allow_html=True)
     st.markdown('<div class="fw-kicker">03 / Detection characteristics</div>', unsafe_allow_html=True)
-    left, middle, right = st.columns([1.25, 1, 0.9])
+    st.subheader("FRP intensity distribution")
+    if intensity is None:
+        st.caption("Intensity data is unavailable.")
+    elif intensity.empty:
+        render_empty("intensity data")
+    else:
+        st.plotly_chart(
+            intensity_figure(intensity),
+            width="stretch",
+            key="overview-intensity",
+            theme=None,
+            config=PLOTLY_CONFIG,
+        )
+        st.caption("Project-defined FRP bands, not official NASA fire classes.")
+
+    left, right = st.columns(2)
     with left:
-        st.subheader("FRP intensity distribution")
-        if intensity is None:
-            st.caption("Intensity data is unavailable.")
-        elif intensity.empty:
-            render_empty("intensity data")
-        else:
-            st.plotly_chart(
-                intensity_figure(intensity),
-                width="stretch",
-                key="overview-intensity",
-            )
-            st.caption("Project-defined FRP bands, not official NASA fire classes.")
-    with middle:
         st.subheader("Day / night activity")
         if daily is None or daily.empty:
             st.caption("Day/night totals are unavailable.")
@@ -290,6 +305,8 @@ def render_overview() -> None:
                 ),
                 width="stretch",
                 key="overview-day-night",
+                theme=None,
+                config=PLOTLY_CONFIG,
             )
     with right:
         st.subheader("Confidence")
@@ -303,6 +320,8 @@ def render_overview() -> None:
                 ),
                 width="stretch",
                 key="overview-confidence",
+                theme=None,
+                config=PLOTLY_CONFIG,
             )
     st.caption(f"Observed daily mart coverage: {date_range}.")
 
@@ -340,6 +359,8 @@ def render_explorer() -> None:
                 daily_figure(visible),
                 width="stretch",
                 key="explorer-daily-chart",
+                theme=None,
+                config=PLOTLY_CONFIG,
             )
             st.dataframe(visible, hide_index=True, width="stretch")
             st.caption("The rolling average uses up to seven observed dates; missing dates are not filled with zero.")
@@ -355,6 +376,8 @@ def render_explorer() -> None:
                 monthly_figure(monthly),
                 width="stretch",
                 key="explorer-monthly-chart",
+                theme=None,
+                config=PLOTLY_CONFIG,
             )
             st.dataframe(monthly, hide_index=True, width="stretch")
 
@@ -369,6 +392,8 @@ def render_explorer() -> None:
                 regional_figure(regional),
                 width="stretch",
                 key="explorer-regional-chart",
+                theme=None,
+                config=PLOTLY_CONFIG,
             )
             st.dataframe(regional, hide_index=True, width="stretch")
 
@@ -383,6 +408,8 @@ def render_explorer() -> None:
                 intensity_figure(intensity),
                 width="stretch",
                 key="explorer-intensity-chart",
+                theme=None,
+                config=PLOTLY_CONFIG,
             )
             st.dataframe(intensity, hide_index=True, width="stretch")
             st.caption("FRP intensity bands are defined by this project and are not official NASA classifications.")
@@ -402,6 +429,8 @@ def render_explorer() -> None:
                 anomalies_figure(anomalies),
                 width="stretch",
                 key="explorer-anomaly-map",
+                theme=None,
+                config=PLOTLY_CONFIG,
             )
             st.dataframe(anomalies, hide_index=True, width="stretch")
             st.caption("Showing up to 100 highest-FRP rows. An anomaly is a thermal detection, not a confirmed wildfire.")
@@ -421,6 +450,8 @@ def render_conversation_result(message: dict, index: int) -> None:
                     figure,
                     width="stretch",
                     key=f"conversation-chart-{index}",
+                    theme=None,
+                    config=PLOTLY_CONFIG,
                 )
             if message["intent"] in {"regional", "anomalies"}:
                 st.dataframe(data, hide_index=True, width="stretch")
