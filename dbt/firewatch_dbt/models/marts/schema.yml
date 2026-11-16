@@ -1,0 +1,240 @@
+version: 2
+
+models:
+  - name: mart_daily_fire_activity
+    description: >
+      Daily active fire detection counts, intensity summaries, and a rolling
+      average over the current and six preceding observed dates.
+    columns:
+      - name: acq_date
+        description: Acquisition date represented by the daily aggregate.
+        data_tests:
+          - not_null
+          - unique
+      - name: total_detections
+        description: Total deduplicated detections observed on the date.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: reliable_detections
+        description: Detections with nominal or high confidence.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: non_reliable_detections
+        description: Detections that are not marked as reliable.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: daytime_detections
+        description: Detections with the exact FIRMS daynight value D.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: nighttime_detections
+        description: Detections with the exact FIRMS daynight value N.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: average_frp
+        description: Average non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
+      - name: maximum_frp
+        description: Maximum non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
+      - name: seven_day_avg_detections
+        description: >
+          Average daily detections over this and up to six preceding observed
+          dates; missing dates are not generated as zero-count rows.
+
+  - name: mart_regional_fire_activity
+    description: >
+      Detection counts, reliability, intensity, and location summaries by
+      assigned region, including Unclassified detections.
+    columns:
+      - name: region_name
+        description: Region assigned to the observation's grid cell.
+        data_tests:
+          - not_null
+          - unique
+      - name: total_detections
+        description: Total deduplicated detections assigned to the region.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: reliable_detections
+        description: Detections with nominal or high confidence.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: non_reliable_detections
+        description: Detections that are not marked as reliable.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: reliable_percentage
+        description: Percentage of regional detections marked as reliable.
+        data_tests:
+          - not_null
+      - name: daytime_detections
+        description: Detections with the exact FIRMS daynight value D.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: nighttime_detections
+        description: Detections with the exact FIRMS daynight value N.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: average_frp
+        description: Average non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
+      - name: maximum_frp
+        description: Maximum non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
+      - name: average_latitude
+        description: Average observation latitude in decimal degrees.
+      - name: average_longitude
+        description: Average observation longitude in decimal degrees.
+
+  - name: mart_monthly_fire_activity
+    description: >
+      Monthly active fire detection counts and FRP summaries for months with
+      observed detections.
+    columns:
+      - name: month_id
+        description: Calendar month identifier in YYYY-MM format.
+        data_tests:
+          - not_null
+          - unique
+      - name: month_start
+        description: First calendar date of the month.
+        data_tests:
+          - not_null
+      - name: total_detections
+        description: Total deduplicated detections observed during the month.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: reliable_detections
+        description: Detections with nominal or high confidence.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: non_reliable_detections
+        description: Detections that are not marked as reliable.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: daytime_detections
+        description: Detections with the exact FIRMS daynight value D.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: nighttime_detections
+        description: Detections with the exact FIRMS daynight value N.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: average_frp
+        description: Average non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
+      - name: maximum_frp
+        description: Maximum non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
+
+  - name: mart_fire_intensity
+    description: >
+      Detection counts and FRP summaries by project-defined intensity
+      category. These categories are not official NASA fire classifications.
+    columns:
+      - name: intensity_category
+        description: >
+          Low, Moderate, High, or Unknown when FRP is null, classified using
+          the configured project FRP thresholds.
+        data_tests:
+          - not_null
+          - unique
+          - accepted_values:
+              arguments:
+                values:
+                  - Low
+                  - Moderate
+                  - High
+                  - Unknown
+      - name: total_detections
+        description: Number of detections in the intensity category.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: reliable_detections
+        description: Detections with nominal or high confidence.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: non_reliable_detections
+        description: Detections that are not marked as reliable.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: average_frp
+        description: Average non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
+      - name: maximum_frp
+        description: Maximum non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - non_negative
+
+  - name: mart_fire_anomalies
+    description: >
+      Active fire detections with non-null FRP at or above the configured
+      percentile threshold. These are not confirmed wildfires. Tied values
+      at the threshold may cause more than 1% of observations to be returned.
+    columns:
+      - name: observation_key
+        description: Deterministic identifier for the deduplicated observation.
+        data_tests:
+          - not_null
+          - unique
+      - name: acq_date
+        description: Observation acquisition date.
+        data_tests:
+          - not_null
+      - name: acq_time
+        description: Observation acquisition time.
+        data_tests:
+          - not_null
+      - name: latitude
+        description: Observation latitude in decimal degrees.
+      - name: longitude
+        description: Observation longitude in decimal degrees.
+      - name: grid_cell_id
+        description: One-degree grid cell containing the observation.
+        data_tests:
+          - not_null
+      - name: region_name
+        description: Region from the grid-cell dimension, when available.
+      - name: frp
+        description: Non-null Fire Radiative Power in megawatts.
+        data_tests:
+          - not_null
+          - non_negative
+      - name: confidence
+        description: Normalized FIRMS confidence category.
+        data_tests:
+          - not_null
+      - name: satellite
+        description: Satellite identifier.
+      - name: anomaly_threshold
+        description: >
+          Continuous FRP percentile calculated from all non-null observations.
+        data_tests:
+          - not_null
+          - non_negative

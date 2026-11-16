@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: stg_active_fires
+    description: >
+      Typed and validated staging records for NASA FIRMS VIIRS active fire
+      observations. Rows with invalid location, acquisition date/time, or
+      negative FRP are excluded; nullable optional fields are retained.
+    columns:
+      - name: latitude
+        description: Observation latitude in decimal degrees.
+        data_tests:
+          - not_null
+      - name: longitude
+        description: Observation longitude in decimal degrees.
+        data_tests:
+          - not_null
+      - name: bright_ti4
+        description: VIIRS I-4 brightness temperature.
+      - name: bright_ti5
+        description: VIIRS I-5 brightness temperature.
+      - name: scan
+        description: Pixel scan dimension in kilometers, when supplied.
+      - name: track
+        description: Pixel track dimension in kilometers, when supplied.
+      - name: acq_date
+        description: Acquisition date.
+        data_tests:
+          - not_null
+      - name: acq_time
+        description: Acquisition time as a BigQuery TIME value.
+        data_tests:
+          - not_null
+      - name: satellite
+        description: Satellite identifier.
+      - name: instrument
+        description: Instrument identifier.
+      - name: confidence
+        description: >
+          Normalized confidence category; records with missing or unrecognized
+          source values are excluded.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - low
+                  - nominal
+                  - high
+      - name: confidence_raw
+        description: Original source confidence value before normalization.
+      - name: version
+        description: FIRMS product version.
+      - name: frp
+        description: Fire Radiative Power in megawatts, when supplied.
+        data_tests:
+          - non_negative
+      - name: daynight
+        description: Day/night indicator.
+      - name: product
+        description: FIRMS product identifier.
+      - name: _airbyte_extracted_at
+        description: Timestamp when Airbyte extracted the source record.
